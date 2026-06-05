@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Table, Button, Modal, Form, Input, InputNumber, Select, DatePicker,
-  message, Popconfirm, Tag, Space, Upload, Alert, Divider, Tabs, Card, Row, Col, Grid,
+  message, Popconfirm, Tag, Space, Upload, Alert, Divider, Tabs, Card, Row, Col,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, DownloadOutlined,
@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons';
 import { companyAPI, paymentTypeAPI, paymentAPI } from '../api';
 import { onSSEEvent } from '../sse';
+import { useMobile } from '../hooks/useMobile';
 import type { Company, PaymentType, Payment } from '../types';
 import dayjs from 'dayjs';
 
@@ -26,6 +27,7 @@ export default function Payments({ user }: Props) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
+  const isMobile = useMobile();
 
   const [filterCompany, setFilterCompany] = useState<number | undefined>();
   const [filterType, setFilterType] = useState<number | undefined>();
@@ -40,8 +42,6 @@ export default function Payments({ user }: Props) {
   const [importLoading, setImportLoading] = useState(false);
 
   const canEdit = user.role === 'super_admin' || user.role === 'admin' || user.role === 'finance';
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
 
   const fetchPayments = useCallback(async () => {
     try {
@@ -192,20 +192,20 @@ export default function Payments({ user }: Props) {
 
   const columns = [
     {
-      title: '日期', dataIndex: 'payment_date', key: 'date', width: isMobile ? 100 : 120,
-      render: (v: string) => <span style={{ color: '#1a1a2e', fontWeight: 600, fontSize: isMobile ? 13 : 15 }}>{v}</span>,
+      title: '日期', dataIndex: 'payment_date', key: 'date', width: 120,
+      render: (v: string) => <span style={{ color: '#1a1a2e', fontWeight: 600, fontSize: 15 }}>{v}</span>,
     },
     {
-      title: '公司', dataIndex: 'company_name', key: 'company', width: isMobile ? 100 : 150,
-      render: (v: string) => <span style={{ fontWeight: 600, fontSize: isMobile ? 13 : 15 }}>{v}</span>,
+      title: '公司', dataIndex: 'company_name', key: 'company', width: 150,
+      render: (v: string) => <span style={{ fontWeight: 600, fontSize: 15 }}>{v}</span>,
     },
     {
-      title: '类型', dataIndex: 'type_name', key: 'type', width: isMobile ? 80 : 110,
+      title: '类型', dataIndex: 'type_name', key: 'type', width: 110,
       render: (text: string) => (
         <Tag style={{
           borderRadius: 4,
           fontWeight: 600,
-          fontSize: isMobile ? 12 : 14,
+          fontSize: 14,
           border: 'none',
           background: isIncome ? 'rgba(82,196,26,0.1)' : 'rgba(255,77,79,0.1)',
           color: isIncome ? '#389e0d' : '#cf1322',
@@ -213,22 +213,22 @@ export default function Payments({ user }: Props) {
       ),
     },
     {
-      title: '金额', dataIndex: 'amount', key: 'amount', width: isMobile ? 120 : 160,
+      title: '金额', dataIndex: 'amount', key: 'amount', width: 160,
       render: (amount: number) => (
         <span style={{
           color: isIncome ? '#389e0d' : '#cf1322',
           fontWeight: 700,
-          fontSize: isMobile ? 14 : 16,
+          fontSize: 16,
           fontFamily: '"DIN Alternate", "Roboto Mono", monospace',
         }}>
           {isIncome ? '+' : '-'}¥{Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
         </span>
       ),
     },
-    ...(!isMobile ? [{
+    {
       title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true,
       render: (v: string) => <span style={{ color: '#595959', fontSize: 15 }}>{v || '-'}</span>,
-    }] : []),
+    },
     ...(canEdit ? [{
       title: '操作', key: 'action', width: 90,
       render: (_: any, record: Payment) => (
@@ -254,8 +254,7 @@ export default function Payments({ user }: Props) {
         marginBottom: 20,
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: isMobile ? 'flex-start' : 'center',
-        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: 'center',
         flexWrap: 'wrap',
         gap: 12,
       }}>
@@ -307,7 +306,7 @@ export default function Payments({ user }: Props) {
       </div>
 
       {/* Summary Cards */}
-      <Row gutter={[16, 12]} style={{ marginBottom: 20 }}>
+      <Row gutter={isMobile ? 8 : 16} style={{ marginBottom: 20 }}>
         <Col xs={24} md={12}>
           <Card
             size="small"
@@ -319,7 +318,7 @@ export default function Payments({ user }: Props) {
                 : 'linear-gradient(135deg, #fff1f0, #ffccc7)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}
-            bodyStyle={{ padding: isMobile ? '12px 16px' : '16px 20px' }}
+            bodyStyle={{ padding: '16px 20px' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -327,7 +326,7 @@ export default function Payments({ user }: Props) {
                   {isIncome ? '合计收入' : '合计支出'}
                 </div>
                 <div style={{
-                  fontSize: isMobile ? 22 : 32,
+                  fontSize: isMobile ? 24 : 32,
                   fontWeight: 800,
                   fontFamily: '"DIN Alternate", "Roboto Mono", monospace',
                   color: isIncome ? '#389e0d' : '#cf1322',
@@ -337,7 +336,7 @@ export default function Payments({ user }: Props) {
                 </div>
               </div>
               <PayCircleOutlined style={{
-                fontSize: isMobile ? 28 : 40,
+                fontSize: 40,
                 color: isIncome ? 'rgba(82,196,26,0.2)' : 'rgba(255,77,79,0.2)',
               }} />
             </div>
@@ -352,20 +351,20 @@ export default function Payments({ user }: Props) {
               background: 'linear-gradient(135deg, #f0f5ff, #d6e4ff)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}
-            bodyStyle={{ padding: isMobile ? '12px 16px' : '16px 20px' }}
+            bodyStyle={{ padding: '16px 20px' }}
           >
-            <div style={{ fontSize: isMobile ? 12 : 14, color: '#8c8c8c', fontWeight: 600, marginBottom: 8 }}>各公司汇总</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 6 : 10 }}>
+            <div style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 600, marginBottom: 8 }}>各公司汇总</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
               {companyTotals.length > 0 ? companyTotals.map(([name, amount]) => (
                 <Tag key={name} style={{
                   margin: 0,
-                  padding: isMobile ? '3px 8px' : '5px 14px',
+                  padding: '5px 14px',
                   borderRadius: 6,
                   border: 'none',
                   background: 'rgba(24,144,255,0.08)',
                   color: '#1a1a2e',
                   fontWeight: 600,
-                  fontSize: isMobile ? 13 : 16,
+                  fontSize: 16,
                   fontFamily: '"DIN Alternate", "Roboto Mono", system-ui',
                 }}>
                   {name}: ¥{amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
@@ -406,12 +405,12 @@ export default function Payments({ user }: Props) {
       {/* Filters */}
       <div style={{
         marginBottom: 16,
-        padding: isMobile ? '8px 10px' : '12px 16px',
+        padding: '12px 16px',
         background: '#fafafa',
         borderRadius: 8,
         border: '1px solid #f0f0f0',
       }}>
-        <Space wrap size={8} direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : undefined }}>
+        <Space wrap size={8}>
           <Select
             placeholder="筛选公司"
             allowClear
@@ -431,7 +430,7 @@ export default function Payments({ user }: Props) {
           <DatePicker.RangePicker
             value={filterDateRange}
             onChange={(dates) => setFilterDateRange(dates as any)}
-            style={{ borderRadius: 6, width: isMobile ? '100%' : undefined }}
+            style={{ borderRadius: 6 }}
           />
         </Space>
       </div>
@@ -442,7 +441,7 @@ export default function Payments({ user }: Props) {
         dataSource={payments}
         rowKey="id"
         loading={loading}
-        scroll={{ x: isMobile ? 420 : 700 }}
+        scroll={{ x: 700 }}
         style={{
           borderRadius: 8,
           overflow: 'hidden',
@@ -488,7 +487,7 @@ export default function Payments({ user }: Props) {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
-        width={isMobile ? '95%' : 500}
+        width={isMobile ? '95vw' : 500}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="company_id" label="公司" rules={[{ required: true, message: '请选择公司' }]}>
@@ -527,7 +526,7 @@ export default function Payments({ user }: Props) {
         open={importOpen}
         onCancel={() => setImportOpen(false)}
         footer={null}
-        width={isMobile ? '95%' : 600}
+        width={isMobile ? '95vw' : 600}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <Button icon={<DownloadOutlined />} onClick={handleDownloadTemplate}>
