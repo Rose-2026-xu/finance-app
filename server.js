@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const db = require('./db');
 const { broadcastEvent, addSSEClient, removeSSEClient } = require('./sse');
 const { authMiddleware } = require('./auth');
@@ -167,8 +168,13 @@ app.get('/api/dashboard', authMiddleware, (req, res) => {
 });
 
 // Serve static frontend files (production)
+// Try dist/ first, then client/dist/ as fallback
+const distPath = fs.existsSync(path.join(__dirname, 'dist', 'index.html'))
+  ? path.join(__dirname, 'dist')
+  : path.join(__dirname, 'client', 'dist');
+
 // Disable cache for index.html so updates take effect immediately
-app.use(express.static(path.join(__dirname, 'client', 'dist'), {
+app.use(express.static(distPath, {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('index.html')) {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -180,7 +186,7 @@ app.use(express.static(path.join(__dirname, 'client', 'dist'), {
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+    res.sendFile(path.join(distPath, 'index.html'));
   }
 });
 
