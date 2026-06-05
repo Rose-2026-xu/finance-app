@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Tag, Space } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Tag, Space, Grid } from 'antd';
 import { PlusOutlined, EditOutlined, StopOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { paymentTypeAPI } from '../api';
 import { onSSEEvent } from '../sse';
@@ -35,6 +35,8 @@ export default function PaymentTypes({ user }: Props) {
   const [form] = Form.useForm();
 
   const canEdit = user.role === 'super_admin' || user.role === 'admin';
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const fetchData = useCallback(async () => {
     try {
@@ -111,12 +113,12 @@ export default function PaymentTypes({ user }: Props) {
   };
 
   const columns = [
-    { title: '排序', key: 'sort', width: 80, render: (_: any, __: any, index: number) => (
+    ...(isMobile ? [] : [{ title: '排序', key: 'sort', width: 80, render: (_: any, __: any, index: number) => (
       <Space size={0}>
         <Button type="text" icon={<ArrowUpOutlined />} size="small" disabled={index === 0} onClick={() => handleMove(index, 'up')} />
         <Button type="text" icon={<ArrowDownOutlined />} size="small" disabled={index === types.length - 1} onClick={() => handleMove(index, 'down')} />
       </Space>
-    )},
+    )}]),
     { title: '类型名称', dataIndex: 'name', key: 'name' },
     {
       title: '分类', dataIndex: 'category', key: 'category',
@@ -127,7 +129,7 @@ export default function PaymentTypes({ user }: Props) {
       render: (v: number) => <Tag color={v ? 'green' : 'default'}>{v ? '启用' : '停用'}</Tag>,
     },
     ...(canEdit ? [{
-      title: '操作', key: 'action', width: 120,
+      title: '操作', key: 'action', width: isMobile ? 80 : 120,
       render: (_: any, record: PaymentType) => (
         <span>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
@@ -152,7 +154,7 @@ export default function PaymentTypes({ user }: Props) {
           </Button>
         )}
       </div>
-      <Table columns={columns} dataSource={types} rowKey="id" loading={loading} pagination={false} />
+      <Table columns={columns} dataSource={types} rowKey="id" loading={loading} pagination={false} scroll={{ x: isMobile ? 350 : undefined }} />
 
       <Modal
         title={editing ? '编辑类型' : '新增类型'}
@@ -160,6 +162,7 @@ export default function PaymentTypes({ user }: Props) {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
+        width={isMobile ? '95%' : 480}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="类型名称" rules={[{ required: true, message: '请输入类型名称' }]}>
