@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Tag, message, Popconfirm } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, Tag, message, Popconfirm, Grid } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { userAPI, companyAPI } from '../api';
 import type { User, Company } from '../types';
@@ -23,6 +23,8 @@ export default function Users() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [form] = Form.useForm();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const fetchUsers = async () => {
     try {
@@ -87,7 +89,7 @@ export default function Users() {
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+    ...(isMobile ? [] : [{ title: 'ID', dataIndex: 'id', key: 'id', width: 60 }]),
     { title: '用户名', dataIndex: 'username', key: 'username' },
     {
       title: '角色', dataIndex: 'role', key: 'role',
@@ -104,9 +106,9 @@ export default function Users() {
         return '-';
       },
     },
-    { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 180 },
+    ...(isMobile ? [] : [{ title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 180 }]),
     {
-      title: '操作', key: 'action', width: 160,
+      title: '操作', key: 'action', width: isMobile ? 80 : 160,
       render: (_: any, record: User) => (
         <span>
           <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)} />
@@ -126,7 +128,7 @@ export default function Users() {
           新增用户
         </Button>
       </div>
-      <Table columns={columns} dataSource={users} rowKey="id" loading={loading} pagination={false} />
+      <Table columns={columns} dataSource={users} rowKey="id" loading={loading} pagination={false} scroll={{ x: isMobile ? 400 : undefined }} />
 
       <Modal
         title={editing ? '编辑用户' : '新增用户'}
@@ -134,6 +136,7 @@ export default function Users() {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
+        width={isMobile ? '95%' : 520}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
