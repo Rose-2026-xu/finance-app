@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Table, Button, Modal, Form, Input, InputNumber, Select, DatePicker,
-  message, Popconfirm, Tag, Space, Upload, Alert, Divider, Tabs, Card, Row, Col,
+  message, Popconfirm, Tag, Space, Upload, Alert, Divider, Tabs, Card, Row, Col, Grid,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, DownloadOutlined,
@@ -40,6 +40,8 @@ export default function Payments({ user }: Props) {
   const [importLoading, setImportLoading] = useState(false);
 
   const canEdit = user.role === 'super_admin' || user.role === 'admin' || user.role === 'finance';
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const fetchPayments = useCallback(async () => {
     try {
@@ -190,20 +192,20 @@ export default function Payments({ user }: Props) {
 
   const columns = [
     {
-      title: '日期', dataIndex: 'payment_date', key: 'date', width: 120,
-      render: (v: string) => <span style={{ color: '#1a1a2e', fontWeight: 600, fontSize: 15 }}>{v}</span>,
+      title: '日期', dataIndex: 'payment_date', key: 'date', width: isMobile ? 100 : 120,
+      render: (v: string) => <span style={{ color: '#1a1a2e', fontWeight: 600, fontSize: isMobile ? 13 : 15 }}>{v}</span>,
     },
     {
-      title: '公司', dataIndex: 'company_name', key: 'company', width: 150,
-      render: (v: string) => <span style={{ fontWeight: 600, fontSize: 15 }}>{v}</span>,
+      title: '公司', dataIndex: 'company_name', key: 'company', width: isMobile ? 100 : 150,
+      render: (v: string) => <span style={{ fontWeight: 600, fontSize: isMobile ? 13 : 15 }}>{v}</span>,
     },
     {
-      title: '类型', dataIndex: 'type_name', key: 'type', width: 110,
+      title: '类型', dataIndex: 'type_name', key: 'type', width: isMobile ? 80 : 110,
       render: (text: string) => (
         <Tag style={{
           borderRadius: 4,
           fontWeight: 600,
-          fontSize: 14,
+          fontSize: isMobile ? 12 : 14,
           border: 'none',
           background: isIncome ? 'rgba(82,196,26,0.1)' : 'rgba(255,77,79,0.1)',
           color: isIncome ? '#389e0d' : '#cf1322',
@@ -211,22 +213,22 @@ export default function Payments({ user }: Props) {
       ),
     },
     {
-      title: '金额', dataIndex: 'amount', key: 'amount', width: 160,
+      title: '金额', dataIndex: 'amount', key: 'amount', width: isMobile ? 120 : 160,
       render: (amount: number) => (
         <span style={{
           color: isIncome ? '#389e0d' : '#cf1322',
           fontWeight: 700,
-          fontSize: 16,
+          fontSize: isMobile ? 14 : 16,
           fontFamily: '"DIN Alternate", "Roboto Mono", monospace',
         }}>
           {isIncome ? '+' : '-'}¥{Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
         </span>
       ),
     },
-    {
+    ...(!isMobile ? [{
       title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true,
       render: (v: string) => <span style={{ color: '#595959', fontSize: 15 }}>{v || '-'}</span>,
-    },
+    }] : []),
     ...(canEdit ? [{
       title: '操作', key: 'action', width: 90,
       render: (_: any, record: Payment) => (
@@ -252,7 +254,8 @@ export default function Payments({ user }: Props) {
         marginBottom: 20,
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        flexDirection: isMobile ? 'column' : 'row',
         flexWrap: 'wrap',
         gap: 12,
       }}>
@@ -304,7 +307,7 @@ export default function Payments({ user }: Props) {
       </div>
 
       {/* Summary Cards */}
-      <Row gutter={16} style={{ marginBottom: 20 }}>
+      <Row gutter={[16, 12]} style={{ marginBottom: 20 }}>
         <Col xs={24} md={12}>
           <Card
             size="small"
@@ -316,7 +319,7 @@ export default function Payments({ user }: Props) {
                 : 'linear-gradient(135deg, #fff1f0, #ffccc7)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}
-            bodyStyle={{ padding: '16px 20px' }}
+            bodyStyle={{ padding: isMobile ? '12px 16px' : '16px 20px' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -324,7 +327,7 @@ export default function Payments({ user }: Props) {
                   {isIncome ? '合计收入' : '合计支出'}
                 </div>
                 <div style={{
-                  fontSize: 32,
+                  fontSize: isMobile ? 22 : 32,
                   fontWeight: 800,
                   fontFamily: '"DIN Alternate", "Roboto Mono", monospace',
                   color: isIncome ? '#389e0d' : '#cf1322',
@@ -334,7 +337,7 @@ export default function Payments({ user }: Props) {
                 </div>
               </div>
               <PayCircleOutlined style={{
-                fontSize: 40,
+                fontSize: isMobile ? 28 : 40,
                 color: isIncome ? 'rgba(82,196,26,0.2)' : 'rgba(255,77,79,0.2)',
               }} />
             </div>
@@ -349,20 +352,20 @@ export default function Payments({ user }: Props) {
               background: 'linear-gradient(135deg, #f0f5ff, #d6e4ff)',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             }}
-            bodyStyle={{ padding: '16px 20px' }}
+            bodyStyle={{ padding: isMobile ? '12px 16px' : '16px 20px' }}
           >
-            <div style={{ fontSize: 14, color: '#8c8c8c', fontWeight: 600, marginBottom: 8 }}>各公司汇总</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ fontSize: isMobile ? 12 : 14, color: '#8c8c8c', fontWeight: 600, marginBottom: 8 }}>各公司汇总</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 6 : 10 }}>
               {companyTotals.length > 0 ? companyTotals.map(([name, amount]) => (
                 <Tag key={name} style={{
                   margin: 0,
-                  padding: '5px 14px',
+                  padding: isMobile ? '3px 8px' : '5px 14px',
                   borderRadius: 6,
                   border: 'none',
                   background: 'rgba(24,144,255,0.08)',
                   color: '#1a1a2e',
                   fontWeight: 600,
-                  fontSize: 16,
+                  fontSize: isMobile ? 13 : 16,
                   fontFamily: '"DIN Alternate", "Roboto Mono", system-ui',
                 }}>
                   {name}: ¥{amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
@@ -403,16 +406,16 @@ export default function Payments({ user }: Props) {
       {/* Filters */}
       <div style={{
         marginBottom: 16,
-        padding: '12px 16px',
+        padding: isMobile ? '8px 10px' : '12px 16px',
         background: '#fafafa',
         borderRadius: 8,
         border: '1px solid #f0f0f0',
       }}>
-        <Space wrap size={8}>
+        <Space wrap size={8} direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : undefined }}>
           <Select
             placeholder="筛选公司"
             allowClear
-            style={{ width: 160 }}
+            style={{ width: isMobile ? '100%' : 160 }}
             value={filterCompany}
             onChange={setFilterCompany}
             options={companies.map(c => ({ value: c.id, label: c.name }))}
@@ -420,7 +423,7 @@ export default function Payments({ user }: Props) {
           <Select
             placeholder="筛选类型"
             allowClear
-            style={{ width: 140 }}
+            style={{ width: isMobile ? '100%' : 140 }}
             value={filterType}
             onChange={setFilterType}
             options={activeTypes.map(t => ({ value: t.id, label: t.name }))}
@@ -428,7 +431,7 @@ export default function Payments({ user }: Props) {
           <DatePicker.RangePicker
             value={filterDateRange}
             onChange={(dates) => setFilterDateRange(dates as any)}
-            style={{ borderRadius: 6 }}
+            style={{ borderRadius: 6, width: isMobile ? '100%' : undefined }}
           />
         </Space>
       </div>
@@ -439,7 +442,7 @@ export default function Payments({ user }: Props) {
         dataSource={payments}
         rowKey="id"
         loading={loading}
-        scroll={{ x: 700 }}
+        scroll={{ x: isMobile ? 420 : 700 }}
         style={{
           borderRadius: 8,
           overflow: 'hidden',
@@ -457,9 +460,7 @@ export default function Payments({ user }: Props) {
             <Table.Summary.Row style={{
               background: isIncome ? '#f6ffed' : '#fff1f0',
             }}>
-              <Table.Summary.Cell index={0} colSpan={3}
-                style={{ fontWeight: 700, fontSize: 15, color: '#1a1a2e' }}
-              >
+              <Table.Summary.Cell index={0} colSpan={3}>
                 <span style={{ fontWeight: 700, color: '#1a1a2e', fontSize: 14 }}>
                   合计
                 </span>
@@ -487,7 +488,7 @@ export default function Payments({ user }: Props) {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
-        width={500}
+        width={isMobile ? '95%' : 500}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="company_id" label="公司" rules={[{ required: true, message: '请选择公司' }]}>
@@ -526,7 +527,7 @@ export default function Payments({ user }: Props) {
         open={importOpen}
         onCancel={() => setImportOpen(false)}
         footer={null}
-        width={600}
+        width={isMobile ? '95%' : 600}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <Button icon={<DownloadOutlined />} onClick={handleDownloadTemplate}>
