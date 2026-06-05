@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Table, Button, Modal, Form, Input, InputNumber, Select, DatePicker,
-  message, Popconfirm, Tag, Space, Tabs,
+  message, Popconfirm, Tag, Space, Tabs, Grid,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { receivableAPI, companyAPI } from '../api';
@@ -28,6 +28,8 @@ export default function Receivables() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Receivable | null>(null);
   const [form] = Form.useForm();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const fetchData = useCallback(async () => {
     try {
@@ -105,32 +107,34 @@ export default function Receivables() {
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: '公司', dataIndex: 'company_name', key: 'company', width: 130 },
-    { title: '对方单位', dataIndex: 'counterparty', key: 'counterparty', width: 130 },
+    ...(isMobile ? [] : [{ title: 'ID', dataIndex: 'id', key: 'id', width: 60 }]),
+    { title: '公司', dataIndex: 'company_name', key: 'company', width: isMobile ? 100 : 130 },
+    { title: '对方单位', dataIndex: 'counterparty', key: 'counterparty', width: isMobile ? 100 : 130 },
     {
-      title: '总金额(元)', dataIndex: 'amount', key: 'amount', width: 120,
+      title: '总金额(元)', dataIndex: 'amount', key: 'amount', width: isMobile ? 100 : 120,
       render: (v: number) => <span style={{ fontWeight: 600 }}>¥{Number(v).toLocaleString()}</span>,
     },
     {
-      title: '已结算(元)', dataIndex: 'settled_amount', key: 'settled', width: 120,
-      render: (v: number) => <span style={{ color: '#52c41a' }}>¥{Number(v).toLocaleString()}</span>,
-    },
-    {
-      title: '未结算(元)', key: 'unsettled', width: 120,
+      title: '未结算(元)', key: 'unsettled', width: isMobile ? 100 : 120,
       render: (_: any, record: Receivable) => {
         const remaining = record.amount - record.settled_amount;
         return <span style={{ color: remaining > 0 ? '#ff4d4f' : '#52c41a', fontWeight: 600 }}>¥{Number(remaining).toLocaleString()}</span>;
       },
     },
     {
-      title: '状态', dataIndex: 'status', key: 'status', width: 90,
+      title: '状态', dataIndex: 'status', key: 'status', width: 80,
       render: (s: string) => <Tag color={statusColors[s]}>{statusLabels[s]}</Tag>,
     },
-    { title: '到期日', dataIndex: 'due_date', key: 'due_date', width: 110, render: (v: string) => v || '-' },
-    { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
+    ...(isMobile ? [] : [
+      {
+        title: '已结算(元)', dataIndex: 'settled_amount', key: 'settled', width: 120,
+        render: (v: number) => <span style={{ color: '#52c41a' }}>¥{Number(v).toLocaleString()}</span>,
+      },
+      { title: '到期日', dataIndex: 'due_date', key: 'due_date', width: 110, render: (v: string) => v || '-' },
+      { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
+    ]),
     {
-      title: '操作', key: 'action', width: 100,
+      title: '操作', key: 'action', width: isMobile ? 80 : 100,
       render: (_: any, record: Receivable) => (
         <span>
           <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)} />
@@ -165,7 +169,7 @@ export default function Receivables() {
         dataSource={items}
         rowKey="id"
         loading={loading}
-        scroll={{ x: 1100 }}
+        scroll={{ x: isMobile ? 500 : 1100 }}
         pagination={{ pageSize: 20, showTotal: (t) => `共 ${t} 条` }}
       />
 
@@ -175,7 +179,7 @@ export default function Receivables() {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
-        width={500}
+        width={isMobile ? '95%' : 500}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="company_id" label="公司" rules={[{ required: true, message: '请选择公司' }]}>
