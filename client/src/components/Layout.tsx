@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Drawer, theme } from 'antd';
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, theme } from 'antd';
 import {
   DashboardOutlined,
   BankOutlined,
@@ -9,8 +9,8 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  MenuOutlined,
   SwapOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useMobile } from '../hooks/useMobile';
@@ -31,13 +31,13 @@ const roleLabels: Record<string, string> = {
 
 export default function Layout({ user, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { token: themeToken } = theme.useToken();
   const isMobile = useMobile();
 
-  const menuItems = [
+  // All menu items (used for desktop sidebar)
+  const allMenuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: '仪表盘' },
     { key: '/companies', icon: <BankOutlined />, label: '公司管理' },
     { key: '/payment-types', icon: <TagsOutlined />, label: '收支类型' },
@@ -48,25 +48,35 @@ export default function Layout({ user, onLogout }: LayoutProps) {
       : []),
   ];
 
+  // Mobile bottom tabs: main 4 items always visible, rest in "更多" dropdown
+  const mainTabs = allMenuItems.slice(0, 4);
+  const moreItems = allMenuItems.slice(4);
+
   const dropdownItems = [
+    ...moreItems.map(item => ({
+      key: item.key,
+      icon: item.icon,
+      label: item.label,
+    })),
+    { type: 'divider' as const },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
-      onClick: onLogout,
+      danger: true,
     },
   ];
 
   const handleMenuClick = (key: string) => {
     navigate(key);
-    if (isMobile) setDrawerOpen(false);
   };
 
-  const menuContent = (
+  // Desktop sidebar menu
+  const sidebarMenu = (
     <Menu
       mode="inline"
       selectedKeys={[location.pathname]}
-      items={menuItems}
+      items={allMenuItems}
       onClick={({ key }) => handleMenuClick(key)}
       style={{ borderRight: 'none' }}
     />
@@ -87,24 +97,14 @@ export default function Layout({ user, onLogout }: LayoutProps) {
     </div>
   );
 
+  // Determine if "更多" tab should be highlighted
+  const moreKeys = moreItems.map(i => i.key);
+  const isMoreActive = moreKeys.includes(location.pathname);
+
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      {/* Mobile: Drawer sidebar */}
-      {isMobile ? (
-        <Drawer
-          placement="left"
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          width={220}
-          bodyStyle={{ padding: 0 }}
-          title={null}
-          closable={false}
-        >
-          {logoContent(false)}
-          {menuContent}
-        </Drawer>
-      ) : (
-        /* Desktop: Sider */
+      {/* Desktop: Sider */}
+      {!isMobile && (
         <Sider
           trigger={null}
           collapsible
@@ -112,11 +112,11 @@ export default function Layout({ user, onLogout }: LayoutProps) {
           style={{ background: themeToken.colorBgContainer }}
         >
           {logoContent(collapsed)}
-          {menuContent}
+          {sidebarMenu}
         </Sider>
       )}
 
-      <AntLayout>
+      <AntLayout style={{ paddingBottom: isMobile ? 56 : 0 }}>
         <Header style={{
           padding: isMobile ? '0 12px' : '0 24px',
           background: themeToken.colorBgContainer,
@@ -124,13 +124,13 @@ export default function Layout({ user, onLogout }: LayoutProps) {
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: `1px solid ${themeToken.colorBorderSecondary}`,
+          height: 48,
+          lineHeight: '48px',
         }}>
           {isMobile ? (
-            <Button
-              type="text"
-              icon={<MenuOutlined />}
-              onClick={() => setDrawerOpen(true)}
-            />
+            <span style={{ fontWeight: 700, fontSize: 16, color: themeToken.colorPrimary }}>
+              财务管理系统
+            </span>
           ) : (
             <Button
               type="text"
@@ -138,9 +138,9 @@ export default function Layout({ user, onLogout }: LayoutProps) {
               onClick={() => setCollapsed(!collapsed)}
             />
           )}
-          <Dropdown menu={{ items: dropdownItems }} placement="bottomRight">
-            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Avatar icon={<UserOutlined />} style={{ background: themeToken.colorPrimary }} />
+          <Dropdown menu={{ items: isMobile ? [{ key: 'logout', icon: <LogoutOutlined />, label: '退出登录' }] : [{ key: 'logout', icon: <LogoutOutlined />, label: '退出登录' }] }} placement="bottomRight">
+            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Avatar size="small" icon={<UserOutlined />} style={{ background: themeToken.colorPrimary }} />
               {!isMobile && (
                 <>
                   <span>{user.username}</span>
@@ -153,8 +153,8 @@ export default function Layout({ user, onLogout }: LayoutProps) {
           </Dropdown>
         </Header>
         <Content style={{
-          margin: isMobile ? 12 : 24,
-          padding: isMobile ? 12 : 24,
+          margin: isMobile ? 8 : 24,
+          padding: isMobile ? 10 : 24,
           background: themeToken.colorBgContainer,
           borderRadius: themeToken.borderRadiusLG,
           minHeight: 280,
@@ -163,6 +163,75 @@ export default function Layout({ user, onLogout }: LayoutProps) {
           <Outlet />
         </Content>
       </AntLayout>
+
+      {/* Mobile: Bottom Tab Bar */}
+      {isMobile && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 56,
+          background: '#fff',
+          borderTop: '1px solid #f0f0f0',
+          display: 'flex',
+          zIndex: 100,
+          boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
+        }}>
+          {mainTabs.map(item => {
+            const isActive = location.pathname === item.key;
+            return (
+              <div
+                key={item.key}
+                onClick={() => handleMenuClick(item.key)}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 2,
+                  cursor: 'pointer',
+                  color: isActive ? themeToken.colorPrimary : '#999',
+                  transition: 'color 0.2s',
+                  userSelect: 'none',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <span style={{ fontSize: 20 }}>{item.icon}</span>
+                <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+              </div>
+            );
+          })}
+          {/* "更多" tab for extra items (users, etc.) */}
+          {moreItems.length > 0 && (
+            <Dropdown
+              menu={{ items: dropdownItems, onClick: ({ key }) => {
+                if (key === 'logout') { onLogout(); return; }
+                handleMenuClick(key);
+              }}}
+              placement="topRight"
+              trigger={['click']}
+            >
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                cursor: 'pointer',
+                color: isMoreActive ? themeToken.colorPrimary : '#999',
+                userSelect: 'none',
+                WebkitTapHighlightColor: 'transparent',
+              }}>
+                <span style={{ fontSize: 20 }}><SettingOutlined /></span>
+                <span style={{ fontSize: 10, fontWeight: isMoreActive ? 600 : 400 }}>更多</span>
+              </div>
+            </Dropdown>
+          )}
+        </div>
+      )}
     </AntLayout>
   );
 }
