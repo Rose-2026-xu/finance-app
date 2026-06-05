@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Table, Button, Modal, Form, InputNumber, Input, message, Popconfirm, Tag } from 'antd';
+import { Table, Button, Modal, Form, InputNumber, Input, message, Popconfirm, Tag, Grid } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { companyAPI } from '../api';
 import { onSSEEvent } from '../sse';
@@ -15,6 +15,8 @@ export default function Companies({ user }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
   const [form] = Form.useForm();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
 
   const canEdit = user.role === 'super_admin' || user.role === 'admin';
 
@@ -75,12 +77,8 @@ export default function Companies({ user }: Props) {
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+    ...(isMobile ? [] : [{ title: 'ID', dataIndex: 'id', key: 'id', width: 60 }]),
     { title: '公司名称', dataIndex: 'name', key: 'name' },
-    {
-      title: '初始余额', dataIndex: 'initial_balance', key: 'initial_balance',
-      render: (v: number) => <span>¥{(v || 0).toLocaleString()}</span>,
-    },
     {
       title: '当前余额', dataIndex: 'balance', key: 'balance',
       render: (v: number) => (
@@ -89,10 +87,16 @@ export default function Companies({ user }: Props) {
         </Tag>
       ),
     },
-    { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
-    { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 180 },
+    ...(isMobile ? [] : [
+      {
+        title: '初始余额', dataIndex: 'initial_balance', key: 'initial_balance',
+        render: (v: number) => <span>¥{(v || 0).toLocaleString()}</span>,
+      },
+      { title: '备注', dataIndex: 'remark', key: 'remark', ellipsis: true },
+      { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 180 },
+    ]),
     ...(canEdit ? [{
-      title: '操作', key: 'action', width: 120,
+      title: '操作', key: 'action', width: isMobile ? 80 : 120,
       render: (_: any, record: Company) => (
         <span>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
@@ -120,6 +124,7 @@ export default function Companies({ user }: Props) {
         rowKey="id"
         loading={loading}
         pagination={false}
+        scroll={{ x: isMobile ? 400 : undefined }}
       />
 
       <Modal
@@ -128,6 +133,7 @@ export default function Companies({ user }: Props) {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
+        width={isMobile ? '95%' : 520}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="公司名称" rules={[{ required: true, message: '请输入公司名称' }]}>
