@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Grid } from 'antd';
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Drawer, theme } from 'antd';
 import {
   DashboardOutlined,
   BankOutlined,
@@ -9,13 +9,14 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  MenuOutlined,
   SwapOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useMobile } from '../hooks/useMobile';
 import type { User } from '../types';
 
 const { Header, Sider, Content } = AntLayout;
-const { useBreakpoint } = Grid;
 
 interface LayoutProps {
   user: User;
@@ -23,17 +24,18 @@ interface LayoutProps {
 }
 
 const roleLabels: Record<string, string> = {
-  super_admin: '超管',
+  super_admin: '超级管理员',
   admin: '管理员',
-  finance: '财务',
+  finance: '财务人员',
 };
 
 export default function Layout({ user, onLogout }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const screens = useBreakpoint();
-  const isMobile = !screens.md; // < 768px
+  const { token: themeToken } = theme.useToken();
+  const isMobile = useMobile();
 
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: '仪表盘' },
@@ -46,15 +48,6 @@ export default function Layout({ user, onLogout }: LayoutProps) {
       : []),
   ];
 
-  // Bottom tab bar items for mobile
-  const tabBarItems = [
-    { key: '/dashboard', icon: <DashboardOutlined />, label: '首页' },
-    { key: '/companies', icon: <BankOutlined />, label: '公司' },
-    { key: '/payments', icon: <PayCircleOutlined />, label: '记录' },
-    { key: '/receivables', icon: <SwapOutlined />, label: '应收' },
-    { key: '/users', icon: <UserOutlined />, label: '我的' },
-  ];
-
   const dropdownItems = [
     {
       key: 'logout',
@@ -64,146 +57,106 @@ export default function Layout({ user, onLogout }: LayoutProps) {
     },
   ];
 
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <AntLayout style={{ minHeight: '100vh' }}>
-        {/* Minimal top bar */}
-        <div style={{
-          height: 48,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-          background: '#1a1a2e',
-          color: '#fff',
-          fontWeight: 700,
-          fontSize: 16,
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-        }}>
-          <span>财务管理</span>
-          <Dropdown menu={{ items: dropdownItems }} placement="bottomRight">
-            <Avatar icon={<UserOutlined />} size="small" style={{ background: '#1890ff', cursor: 'pointer' }} />
-          </Dropdown>
-        </div>
+  const handleMenuClick = (key: string) => {
+    navigate(key);
+    if (isMobile) setDrawerOpen(false);
+  };
 
-        {/* Content */}
-        <Content style={{
-          flex: 1,
-          padding: 12,
-          overflow: 'auto',
-          paddingBottom: 60, // Space for tab bar
-        }}>
-          <Outlet />
-        </Content>
+  const menuContent = (
+    <Menu
+      mode="inline"
+      selectedKeys={[location.pathname]}
+      items={menuItems}
+      onClick={({ key }) => handleMenuClick(key)}
+      style={{ borderRight: 'none' }}
+    />
+  );
 
-        {/* Bottom Tab Bar */}
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 56,
-          background: '#fff',
-          borderTop: '1px solid #f0f0f0',
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          zIndex: 100,
-          boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
-        }}>
-          {tabBarItems.map(item => {
-            const isActive = location.pathname === item.key ||
-              (item.key === '/users' && location.pathname === '/users');
-            return (
-              <div
-                key={item.key}
-                onClick={() => navigate(item.key)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flex: 1,
-                  cursor: 'pointer',
-                  color: isActive ? '#1890ff' : '#8c8c8c',
-                  fontSize: 10,
-                  gap: 2,
-                  padding: '4px 0',
-                  transition: 'color 0.2s',
-                }}
-              >
-                <span style={{ fontSize: 20 }}>{item.icon}</span>
-                <span style={{ fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
-              </div>
-            );
-          })}
-        </div>
-      </AntLayout>
-    );
-  }
+  const logoContent = (compact: boolean) => (
+    <div style={{
+      height: 64,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderBottom: `1px solid ${themeToken.colorBorderSecondary}`,
+      fontWeight: 600,
+      fontSize: compact ? 14 : 18,
+      color: themeToken.colorPrimary,
+    }}>
+      {compact ? '财务' : '财务管理系统'}
+    </div>
+  );
 
-  // Desktop layout (unchanged)
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      <Sider
-        trigger={null}
-        collapsible
-        collapsed={collapsed}
-        breakpoint="lg"
-        style={{ background: '#fff' }}
-      >
-        <div style={{
-          height: 64,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottom: '1px solid #f0f0f0',
-          fontWeight: 600,
-          fontSize: collapsed ? 14 : 18,
-          color: '#1a1a2e',
-        }}>
-          {collapsed ? '财务' : '财务管理系统'}
-        </div>
-        <Menu
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={({ key }) => navigate(key)}
-          style={{ borderRight: 'none' }}
-        />
-      </Sider>
+      {/* Mobile: Drawer sidebar */}
+      {isMobile ? (
+        <Drawer
+          placement="left"
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          width={220}
+          bodyStyle={{ padding: 0 }}
+          title={null}
+          closable={false}
+        >
+          {logoContent(false)}
+          {menuContent}
+        </Drawer>
+      ) : (
+        /* Desktop: Sider */
+        <Sider
+          trigger={null}
+          collapsible
+          collapsed={collapsed}
+          style={{ background: themeToken.colorBgContainer }}
+        >
+          {logoContent(collapsed)}
+          {menuContent}
+        </Sider>
+      )}
+
       <AntLayout>
         <Header style={{
-          padding: '0 24px',
-          background: '#fff',
+          padding: isMobile ? '0 12px' : '0 24px',
+          background: themeToken.colorBgContainer,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: `1px solid ${themeToken.colorBorderSecondary}`,
         }}>
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-          />
+          {isMobile ? (
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={() => setDrawerOpen(true)}
+            />
+          ) : (
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+            />
+          )}
           <Dropdown menu={{ items: dropdownItems }} placement="bottomRight">
             <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Avatar icon={<UserOutlined />} style={{ background: '#1890ff' }} />
-              <span>{user.username}</span>
-              <span style={{ color: '#8c8c8c', fontSize: 12 }}>
-                {roleLabels[user.role] || user.role}
-              </span>
+              <Avatar icon={<UserOutlined />} style={{ background: themeToken.colorPrimary }} />
+              {!isMobile && (
+                <>
+                  <span>{user.username}</span>
+                  <span style={{ color: themeToken.colorTextSecondary, fontSize: 12 }}>
+                    {roleLabels[user.role] || user.role}
+                  </span>
+                </>
+              )}
             </div>
           </Dropdown>
         </Header>
         <Content style={{
-          margin: 24,
-          padding: 24,
-          background: '#fff',
-          borderRadius: 8,
+          margin: isMobile ? 12 : 24,
+          padding: isMobile ? 12 : 24,
+          background: themeToken.colorBgContainer,
+          borderRadius: themeToken.borderRadiusLG,
           minHeight: 280,
           overflow: 'auto',
         }}>
