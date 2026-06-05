@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, Tag, message, Popconfirm, Grid } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, Tag, message, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { userAPI, companyAPI } from '../api';
+import { useMobile } from '../hooks/useMobile';
 import type { User, Company } from '../types';
 
 const roleOptions = [
@@ -23,8 +24,7 @@ export default function Users() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [form] = Form.useForm();
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+  const isMobile = useMobile();
 
   const fetchUsers = async () => {
     try {
@@ -89,7 +89,7 @@ export default function Users() {
   };
 
   const columns = [
-    ...(isMobile ? [] : [{ title: 'ID', dataIndex: 'id', key: 'id', width: 60 }]),
+    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
     { title: '用户名', dataIndex: 'username', key: 'username' },
     {
       title: '角色', dataIndex: 'role', key: 'role',
@@ -106,9 +106,9 @@ export default function Users() {
         return '-';
       },
     },
-    ...(isMobile ? [] : [{ title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 180 }]),
+    { title: '创建时间', dataIndex: 'created_at', key: 'created_at', width: 180 },
     {
-      title: '操作', key: 'action', width: isMobile ? 80 : 160,
+      title: '操作', key: 'action', width: 160,
       render: (_: any, record: User) => (
         <span>
           <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)} />
@@ -122,13 +122,20 @@ export default function Users() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <h2 style={{ margin: 0 }}>用户管理</h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           新增用户
         </Button>
       </div>
-      <Table columns={columns} dataSource={users} rowKey="id" loading={loading} pagination={false} scroll={{ x: isMobile ? 400 : undefined }} />
+      <Table
+        columns={columns}
+        dataSource={users}
+        rowKey="id"
+        loading={loading}
+        pagination={false}
+        scroll={{ x: 900 }}
+      />
 
       <Modal
         title={editing ? '编辑用户' : '新增用户'}
@@ -136,7 +143,7 @@ export default function Users() {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
-        width={isMobile ? '95%' : 520}
+        width={isMobile ? '95vw' : undefined}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
