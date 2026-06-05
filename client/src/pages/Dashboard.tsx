@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Card, Row, Col, Statistic, Table, Tag, Select, DatePicker, Space, Divider } from 'antd';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Card, Row, Col, Statistic, Table, Tag, Select, DatePicker, Space, Divider, Grid } from 'antd';
 import {
   BankOutlined,
   PayCircleOutlined,
@@ -32,6 +32,9 @@ export default function Dashboard({ user }: Props) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [receivables, setReceivables] = useState<ReceivableSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
   const [filterMode, setFilterMode] = useState<'month' | 'week' | 'custom'>('month');
   const [customRange, setCustomRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | undefined>();
 
@@ -81,23 +84,28 @@ export default function Dashboard({ user }: Props) {
   const expensePayments = payments.filter(p => p.direction === 'expense');
   const incomePayments = payments.filter(p => p.direction === 'income');
 
-  const paymentColumns = (direction: 'income' | 'expense') => [
-    { title: '日期', dataIndex: 'payment_date', key: 'date', width: 110 },
-    { title: '公司', dataIndex: 'company_name', key: 'company', width: 120 },
-    {
-      title: '类型', dataIndex: 'type_name', key: 'type', width: 100,
-      render: (text: string) => <Tag color={direction === 'income' ? 'green' : 'red'}>{text}</Tag>,
-    },
-    {
-      title: '金额(万元)', dataIndex: 'amount', key: 'amount', width: 120,
-      render: (amount: number) => (
-        <span style={{ color: direction === 'income' ? '#52c41a' : '#ff4d4f', fontWeight: 600 }}>
-          {direction === 'income' ? '+' : '-'}{toWan(amount)}
-        </span>
-      ),
-    },
-    { title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true },
-  ];
+  const paymentColumns = (direction: 'income' | 'expense') => {
+    const cols: any[] = [
+      { title: '日期', dataIndex: 'payment_date', key: 'date', width: 100 },
+      { title: '公司', dataIndex: 'company_name', key: 'company', width: 110 },
+      {
+        title: '类型', dataIndex: 'type_name', key: 'type', width: 80,
+        render: (text: string) => <Tag color={direction === 'income' ? 'green' : 'red'}>{text}</Tag>,
+      },
+      {
+        title: '金额(万元)', dataIndex: 'amount', key: 'amount', width: 100,
+        render: (amount: number) => (
+          <span style={{ color: direction === 'income' ? '#52c41a' : '#ff4d4f', fontWeight: 600 }}>
+            {direction === 'income' ? '+' : '-'}{toWan(amount)}
+          </span>
+        ),
+      },
+    ];
+    if (!isMobile) {
+      cols.push({ title: '描述', dataIndex: 'description', key: 'desc', ellipsis: true });
+    }
+    return cols;
+  };
 
   return (
     <div>
@@ -139,8 +147,7 @@ export default function Dashboard({ user }: Props) {
                       value={parseFloat(toWan(c.balance))}
                       precision={2}
                       suffix="万元"
-                      valueStyle={{ color: c.balance >= 0 ? '#1890ff' : '#ff4d4f', fontSize: 20 }}
-                    />
+                      valueStyle={{ color: c.balance >= 0 ? '#1890ff' : '#ff4d4f', fontSize: isMobile ? 16 : 20 }}                    />
                   </Col>
                   <Col span={12}>
                     <Statistic
@@ -148,7 +155,7 @@ export default function Dashboard({ user }: Props) {
                       value={parseFloat(toWan(c.net))}
                       precision={2}
                       suffix="万元"
-                      valueStyle={{ color: c.net >= 0 ? '#52c41a' : '#ff4d4f', fontSize: 20 }}
+                      valueStyle={{ color: c.net >= 0 ? '#52c41a' : '#ff4d4f', fontSize: isMobile ? 16 : 20 }}
                     />
                   </Col>
                 </Row>
@@ -215,6 +222,7 @@ export default function Dashboard({ user }: Props) {
           columns={paymentColumns('income')}
           dataSource={incomePayments}
           rowKey="id"
+          scroll={{ x: isMobile ? 400 : undefined }}
           pagination={{ pageSize: 5, showTotal: (t) => `共 ${t} 条` }}
           size="small"
           locale={{ emptyText: `${filterLabel}暂无收入记录` }}
@@ -227,6 +235,7 @@ export default function Dashboard({ user }: Props) {
           columns={paymentColumns('expense')}
           dataSource={expensePayments}
           rowKey="id"
+          scroll={{ x: isMobile ? 400 : undefined }}
           pagination={{ pageSize: 5, showTotal: (t) => `共 ${t} 条` }}
           size="small"
           locale={{ emptyText: `${filterLabel}暂无支出记录` }}
