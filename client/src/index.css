@@ -1,0 +1,68 @@
+/* Global styles for mobile responsiveness */
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  /* Reduce ant design table font size on mobile */
+  .ant-table {
+    font-size: 13px;
+  }
+
+  .ant-table-thead > tr > th {
+    font-size: 13px;
+    padding: 8px 6px;
+  }
+
+  .ant-table-tbody > tr > td {
+    padding: 8px 6px;
+  }
+
+  /* Smaller modals */
+  .ant-modal {
+    max-width: calc(100vw - 16px);
+    margin: 8px auto;
+  }
+
+  .ant-modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  /* Make selects full width on mobile */
+  .ant-select {
+    width: 100% !important;
+  }
+
+  /* DatePicker full width on mobile */
+  .ant-picker {
+    width: 100%;
+  }
+
+  /* Reduce statistic font sizes */
+  .ant-statistic-content-value {
+    font-size: 20px !important;
+  }
+
+  /* Card body less padding */
+  .ant-card-body {
+    padding: 12px;
+  }
+
+  /* Better tab bar on mobile */
+  .ant-tabs-nav {
+    margin-bottom: 8px;
+  }
+
+  /* Form items tighter */
+  .ant-form-item {
+    margin-bottom: 12px;
+  }
+}
