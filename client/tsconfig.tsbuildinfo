@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/sse.ts","./src/components/layout.tsx","./src/pages/companies.tsx","./src/pages/dashboard.tsx","./src/pages/login.tsx","./src/pages/paymenttypes.tsx","./src/pages/payments.tsx","./src/pages/receivables.tsx","./src/pages/users.tsx","./src/types/index.ts"],"version":"5.9.3"}
