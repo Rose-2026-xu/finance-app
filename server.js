@@ -167,9 +167,19 @@ app.get('/api/dashboard', authMiddleware, (req, res) => {
 });
 
 // Serve static frontend files (production)
-app.use(express.static(path.join(__dirname, 'client', 'dist')));
+// Disable cache for index.html so updates take effect immediately
+app.use(express.static(path.join(__dirname, 'client', 'dist'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('index.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  },
+}));
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
   }
 });
