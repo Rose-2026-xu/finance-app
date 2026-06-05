@@ -34,7 +34,7 @@ export default function Login({ onLogin }: LoginProps) {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     }}>
       <Card
-        style={{ width: '90%', maxWidth: 400, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
+        style={{ width: '90vw', maxWidth: 400, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
         title={
           <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 600 }}>
             财务管理系统
