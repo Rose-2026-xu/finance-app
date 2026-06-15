@@ -41,7 +41,7 @@ router.get('/', authMiddleware, (req, res) => {
 
 // POST /api/receivables
 router.post('/', authMiddleware, roleMiddleware('super_admin', 'admin', 'finance'), (req, res) => {
-  const { company_id, direction, counterparty, amount, due_date, description } = req.body;
+  const { company_id, direction, counterparty, amount, due_date, description, status, settled_amount } = req.body;
 
   if (!company_id || !direction || !counterparty || !amount) {
     return res.status(400).json({ error: '缺少必填字段' });
@@ -49,6 +49,9 @@ router.post('/', authMiddleware, roleMiddleware('super_admin', 'admin', 'finance
   if (!['receivable', 'payable'].includes(direction)) {
     return res.status(400).json({ error: '方向无效，应为 receivable 或 payable' });
   }
+
+  const validStatus = ['pending', 'partial', 'settled'].includes(status) ? status : 'pending';
+  const settledAmount = settled_amount !== undefined ? parseFloat(settled_amount) : 0;
 
   const userCids = req.user.company_ids && req.user.company_ids.length > 0
     ? req.user.company_ids : (req.user.company_id ? [req.user.company_id] : []);
@@ -58,8 +61,8 @@ router.post('/', authMiddleware, roleMiddleware('super_admin', 'admin', 'finance
 
   db.run(
     `INSERT INTO receivables (company_id, direction, counterparty, amount, settled_amount, due_date, description, status, created_by)
-     VALUES (?, ?, ?, ?, 0, ?, ?, 'pending', ?)`,
-    [company_id, direction, counterparty, parseFloat(amount), due_date || null, description || '', req.user.id]
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [company_id, direction, counterparty, parseFloat(amount), settledAmount, due_date || null, description || '', validStatus, req.user.id]
   );
 
   const item = db.get('SELECT * FROM receivables ORDER BY id DESC LIMIT 1');
