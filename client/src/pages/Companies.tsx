@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Table, Button, Modal, Form, InputNumber, Input, message, Popconfirm, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, InputNumber, Input, message, Popconfirm, Tag, Card, Row, Col } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, BankOutlined } from '@ant-design/icons';
 import { companyAPI } from '../api';
 import { onSSEEvent } from '../sse';
-import { useMobile } from '../hooks/useMobile';
 import type { Company } from '../types';
+
+const MOBILE = typeof window !== 'undefined' && window.innerWidth < 768;
 
 interface Props {
   user: any;
@@ -16,7 +17,6 @@ export default function Companies({ user }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
   const [form] = Form.useForm();
-  const isMobile = useMobile();
 
   const canEdit = user.role === 'super_admin' || user.role === 'admin';
 
@@ -76,7 +76,8 @@ export default function Companies({ user }: Props) {
     }
   };
 
-  const columns = [
+  // Desktop table columns
+  const desktopColumns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
     { title: '公司名称', dataIndex: 'name', key: 'name' },
     {
@@ -108,22 +109,85 @@ export default function Companies({ user }: Props) {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+      <div style={{
+        marginBottom: 16,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: MOBILE ? 'stretch' : 'center',
+        flexDirection: MOBILE ? 'column' : 'row',
+        gap: MOBILE ? 8 : 0,
+      }}>
         <h2 style={{ margin: 0 }}>公司管理</h2>
         {canEdit && (
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} block={MOBILE}>
             新增公司
           </Button>
         )}
       </div>
-      <Table
-        columns={columns}
-        dataSource={companies}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-        scroll={{ x: 800 }}
-      />
+
+      {/* Desktop: Table */}
+      {!MOBILE && (
+        <Table
+          columns={desktopColumns}
+          dataSource={companies}
+          rowKey="id"
+          loading={loading}
+          pagination={false}
+        />
+      )}
+
+      {/* Mobile: Card list */}
+      {MOBILE && (
+        <Row gutter={[0, 12]}>
+          {companies.map(c => (
+            <Col span={24} key={c.id}>
+              <Card
+                size="small"
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <BankOutlined style={{ color: '#1890ff' }} />
+                    <span style={{ fontWeight: 600, fontSize: 15 }}>{c.name}</span>
+                    {c.remark && (
+                      <Tag color="blue" style={{ fontSize: 11, marginLeft: 'auto' }}>{c.remark}</Tag>
+                    )}
+                  </div>
+                }
+                extra={canEdit ? (
+                  <span>
+                    <Button type="link" icon={<EditOutlined />} size="small" onClick={() => handleEdit(c)} />
+                    <Popconfirm title="确定删除？" onConfirm={() => handleDelete(c.id)}>
+                      <Button type="link" danger icon={<DeleteOutlined />} size="small" />
+                    </Popconfirm>
+                  </span>
+                ) : null}
+                style={{ borderRadius: 8 }}
+              >
+                <Row gutter={12}>
+                  <Col span={12}>
+                    <div style={{ color: '#8c8c8c', fontSize: 12, marginBottom: 2 }}>初始余额</div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>¥{(c.initial_balance || 0).toLocaleString()}</div>
+                  </Col>
+                  <Col span={12}>
+                    <div style={{ color: '#8c8c8c', fontSize: 12, marginBottom: 2 }}>当前余额</div>
+                    <div style={{
+                      fontWeight: 700,
+                      fontSize: 16,
+                      color: c.balance >= 0 ? '#1890ff' : '#ff4d4f',
+                    }}>
+                      ¥{(c.balance || 0).toLocaleString()}
+                    </div>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+          ))}
+          {companies.length === 0 && !loading && (
+            <Col span={24} style={{ textAlign: 'center', color: '#bfbfbf', padding: 40 }}>
+              暂无公司数据
+            </Col>
+          )}
+        </Row>
+      )}
 
       <Modal
         title={editing ? '编辑公司' : '新增公司'}
@@ -131,7 +195,8 @@ export default function Companies({ user }: Props) {
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
-        width={isMobile ? '95vw' : undefined}
+        width={MOBILE ? '95%' : undefined}
+        style={MOBILE ? { maxWidth: 500, top: 20 } : undefined}
       >
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="公司名称" rules={[{ required: true, message: '请输入公司名称' }]}>
