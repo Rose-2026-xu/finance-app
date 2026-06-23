@@ -111,6 +111,7 @@ async function initDatabase() {
 
   addColumnIfNotExists('companies', 'remark', "TEXT DEFAULT ''");
   addColumnIfNotExists('companies', 'initial_balance', 'REAL DEFAULT 0');
+  addColumnIfNotExists('companies', 'sort_order', 'INTEGER DEFAULT 0');
   addColumnIfNotExists('payment_types', 'sort_order', 'INTEGER DEFAULT 0');
 
   // Seed super admin if not exists
