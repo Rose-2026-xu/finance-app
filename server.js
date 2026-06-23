@@ -63,12 +63,12 @@ app.get('/api/dashboard', authMiddleware, (req, res) => {
       ? req.user.company_ids : (req.user.company_id ? [req.user.company_id] : []);
     if (companyIds.length > 0) {
       const placeholders = companyIds.map(() => '?').join(',');
-      companies = db.all(`SELECT * FROM companies WHERE id IN (${placeholders}) ORDER BY id`, companyIds);
+      companies = db.all(`SELECT * FROM companies WHERE id IN (${placeholders}) ORDER BY sort_order ASC, id ASC`, companyIds);
     } else {
       companies = [];
     }
   } else {
-    companies = db.all('SELECT * FROM companies ORDER BY id');
+    companies = db.all('SELECT * FROM companies ORDER BY sort_order ASC, id ASC');
   }
 
   // Build date filter
